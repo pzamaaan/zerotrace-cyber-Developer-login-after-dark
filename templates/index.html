@@ -1,287 +1,344 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
+{% block title %}Authentication Overview — ZeroTrace Login After Dark{% endblock %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login After Dark — Authentication Monitoring</title>
-    <link rel="stylesheet" href="../static/css/style.css">
-</head>
+{% block content %}
+{% set stats = stats|default({}) %}
+{% set hourly_activity = hourly_activity|default([]) %}
+{% set hourly_counts = hourly_counts|default([]) %}
+{% set suspicious_ips = suspicious_ips|default([]) %}
+{% set alerts = alerts|default([]) %}
+{% set bruteforce_users = bruteforce_users|default([]) %}
+{% set window_label = window_label|default('last 24h') %}
 
-<body>
+<!-- Topbar Header -->
+<header class="topbar">
+  <div class="topbar-title-group">
+    <div class="badge-subhead">
+      <span class="pulse-beacon-inline"></span>
+      REAL-TIME AUTH SURVEILLANCE
+    </div>
+    <h1 class="page-title">Authentication Overview</h1>
+    <p class="page-subtitle">Telemetry & off-hours credential stuffing detection across all monitored endpoints</p>
+  </div>
 
-    <header class="site-header">
-        <div class="header-inner">
-            <div class="brand">
-                <span class="brand-mark"></span>
-                <span class="brand-name">Login After Dark</span>
-                <span class="brand-sub">/ auth monitoring</span>
-            </div>
-            <nav class="main-nav">
-                <a href="#" class="active">Dashboard</a>
-                <a href="#">Login Logs</a>
-                <a href="#">Alerts</a>
-                <a href="#">Analysis</a>
-            </nav>
-        </div>
-    </header>
-
-    <div class="container">
-
-        <div class="page-intro">
-            <h1>Login After Dark</h1>
-            <p>Authentication Monitoring &amp; Log Analysis</p>
-        </div>
-
-        <!-- ============ Dashboard Statistics ============ -->
-        <section class="section">
-            <div class="section-head">
-                <h2>Overview</h2>
-            </div>
-            <div class="stat-grid">
-                <div class="stat-card">
-                    <div class="label">Total Login Attempts</div>
-                    <div class="value">{{ total_attempts }}</div>
-                </div>
-                <div class="stat-card accent-amber">
-                    <div class="label">Failed Attempts</div>
-                    <div class="value">{{ failed_attempts }}</div>
-                </div>
-                <div class="stat-card accent-red">
-                    <div class="label">Suspicious Activity</div>
-                    <div class="value">{{ suspicious_activity }}</div>
-                </div>
-                <div class="stat-card accent-cyan">
-                    <div class="label">Blocked IPs</div>
-                    <div class="value">{{ blocked_ips }}</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ============ Threat Overview ============ -->
-        <section class="section">
-            <div class="section-head">
-                <h2>Threat Overview</h2>
-            </div>
-
-            {% if threat_status == "Critical" %}
-            <div class="threat-banner status-critical">
-                <span class="dot"></span>
-                <div class="body">
-                    <div class="status-label">CRITICAL</div>
-                    <div class="message">{{ threat_message }}</div>
-                </div>
-            </div>
-            {% elif threat_status == "Warning" %}
-            <div class="threat-banner status-warning">
-                <span class="dot"></span>
-                <div class="body">
-                    <div class="status-label">WARNING</div>
-                    <div class="message">{{ threat_message }}</div>
-                </div>
-            </div>
-            {% else %}
-            <div class="threat-banner status-normal">
-                <span class="dot"></span>
-                <div class="body">
-                    <div class="status-label">NORMAL</div>
-                    <div class="message">{{ threat_message }}</div>
-                </div>
-            </div>
-            {% endif %}
-        </section>
-
-        <!-- ============ Recent Authentication Logs ============ -->
-        <section class="section">
-            <div class="section-head">
-                <h2>Recent Authentication Logs</h2>
-                <span class="hint">live feed</span>
-            </div>
-
-            <div class="table-wrap">
-                <table class="log-table">
-                    <thead>
-                        <tr>
-                            <th>Time</th>
-                            <th>Username</th>
-                            <th>IP Address</th>
-                            <th>Location</th>
-                            <th>Status</th>
-                            <th>Risk Level</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for log in login_logs %}
-                        <tr>
-                            <td class="mono">{{ log.time }}</td>
-                            <td>{{ log.username }}</td>
-                            <td class="mono">{{ log.ip }}</td>
-                            <td>{{ log.location }}</td>
-                            <td>
-                                {% if log.status == "Successful" %}
-                                <span class="badge status-successful">Successful</span>
-                                {% elif log.status == "Failed" %}
-                                <span class="badge status-failed">Failed</span>
-                                {% elif log.status == "Suspicious" %}
-                                <span class="badge status-suspicious">Suspicious</span>
-                                {% else %}
-                                <span class="badge">{{ log.status }}</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if log.risk_level == "Low" %}
-                                <span class="badge risk-low">Low</span>
-                                {% elif log.risk_level == "Medium" %}
-                                <span class="badge risk-medium">Medium</span>
-                                {% elif log.risk_level == "High" %}
-                                <span class="badge risk-high">High</span>
-                                {% else %}
-                                <span class="badge">{{ log.risk_level }}</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr class="empty-row">
-                            <td colspan="6">No authentication logs available.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <div class="two-col">
-            <!-- ============ Suspicious Activity Patterns ============ -->
-            <section class="section">
-                <div class="section-head">
-                    <h2>Suspicious Activity Patterns</h2>
-                </div>
-
-                <div class="pattern-list">
-                    {% for pattern in suspicious_patterns %}
-                    {% if pattern.severity == "High" %}
-                    <div class="pattern-card severity-high">
-                        {% elif pattern.severity == "Medium" %}
-                        <div class="pattern-card severity-medium">
-                            {% else %}
-                            <div class="pattern-card severity-low">
-                                {% endif %}
-                                <div class="info">
-                                    <div class="name">{{ pattern.name }}</div>
-                                    <div class="description">{{ pattern.description }}</div>
-                                </div>
-                                <div class="meta">
-                                    <span class="count">{{ pattern.count }}</span>
-                                    <span class="severity-tag">{{ pattern.severity }}</span>
-                                </div>
-                            </div>
-                            {% else %}
-                            <div class="pattern-card">
-                                <div class="info">
-                                    <div class="name">No patterns detected</div>
-                                    <div class="description">Nothing supplied by the backend for this period.</div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-            </section>
-
-            <!-- ============ Risk Analysis ============ -->
-            <section class="section">
-                <div class="section-head">
-                    <h2>Risk Analysis</h2>
-                </div>
-
-                <div class="risk-panel">
-                    <div class="risk-row">
-                        <div class="risk-top">
-                            <span class="risk-name">Low Risk</span>
-                            <span class="risk-value">{{ risk.low }}%</span>
-                        </div>
-                        <div class="progress-track">
-                            <div class="progress-fill low" style="width: {{ risk.low }}%;"></div>
-                        </div>
-                    </div>
-
-                    <div class="risk-row">
-                        <div class="risk-top">
-                            <span class="risk-name">Medium Risk</span>
-                            <span class="risk-value">{{ risk.medium }}%</span>
-                        </div>
-                        <div class="progress-track">
-                            <div class="progress-fill medium" style="width: {{ risk.medium }}%;"></div>
-                        </div>
-                    </div>
-
-                    <div class="risk-row">
-                        <div class="risk-top">
-                            <span class="risk-name">High Risk</span>
-                            <span class="risk-value">{{ risk.high }}%</span>
-                        </div>
-                        <div class="progress-track">
-                            <div class="progress-fill high" style="width: {{ risk.high }}%;"></div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <!-- ============ System Status ============ -->
-        <section class="section">
-            <div class="section-head">
-                <h2>System Status</h2>
-            </div>
-
-            <div class="status-grid">
-                <div class="status-card">
-                    <span class="name">Log Collection</span>
-                    {% if system.log_collection == "Active" %}
-                    <span class="status-pill active"><span class="dot"></span>Active</span>
-                    {% elif system.log_collection == "Warning" %}
-                    <span class="status-pill warning"><span class="dot"></span>Warning</span>
-                    {% elif system.log_collection == "Offline" %}
-                    <span class="status-pill offline"><span class="dot"></span>Offline</span>
-                    {% elif system.log_collection == "Ready" %}
-                    <span class="status-pill ready"><span class="dot"></span>Ready</span>
-                    {% else %}
-                    <span class="status-pill">{{ system.log_collection }}</span>
-                    {% endif %}
-                </div>
-
-                <div class="status-card">
-                    <span class="name">Monitoring</span>
-                    {% if system.monitoring == "Active" %}
-                    <span class="status-pill active"><span class="dot"></span>Active</span>
-                    {% elif system.monitoring == "Warning" %}
-                    <span class="status-pill warning"><span class="dot"></span>Warning</span>
-                    {% elif system.monitoring == "Offline" %}
-                    <span class="status-pill offline"><span class="dot"></span>Offline</span>
-                    {% elif system.monitoring == "Ready" %}
-                    <span class="status-pill ready"><span class="dot"></span>Ready</span>
-                    {% else %}
-                    <span class="status-pill">{{ system.monitoring }}</span>
-                    {% endif %}
-                </div>
-
-                <div class="status-card">
-                    <span class="name">Detection Engine</span>
-                    {% if system.detection_engine == "Active" %}
-                    <span class="status-pill active"><span class="dot"></span>Active</span>
-                    {% elif system.detection_engine == "Warning" %}
-                    <span class="status-pill warning"><span class="dot"></span>Warning</span>
-                    {% elif system.detection_engine == "Offline" %}
-                    <span class="status-pill offline"><span class="dot"></span>Offline</span>
-                    {% elif system.detection_engine == "Ready" %}
-                    <span class="status-pill ready"><span class="dot"></span>Ready</span>
-                    {% else %}
-                    <span class="status-pill">{{ system.detection_engine }}</span>
-                    {% endif %}
-                </div>
-            </div>
-        </section>
-
+  <div class="topbar-controls">
+    <div class="time-range-group" role="group" aria-label="Time Window">
+      <button class="pill-btn active" data-range="24h">Last 24h</button>
+      <button class="pill-btn" data-range="7d">Last 7d</button>
+      <button class="pill-btn" data-range="live">Live Stream</button>
     </div>
 
-</body>
+    <div class="clock-display">
+      <div class="clock-time mono" id="live-clock">--:--:--</div>
+      <div class="clock-date" id="live-date">Syncing time...</div>
+    </div>
+  </div>
+</header>
 
-</html>
+<!-- Primary KPI Metric Cards -->
+<section class="stat-row">
+  <!-- Risk Gauge Card -->
+  <div class="card hero-risk-card">
+    <div class="gauge-wrapper">
+      <div class="gauge-ring" style="--risk-score: {{ stats.risk_score|default(0) }};">
+        <div class="gauge-inner">
+          <span class="gauge-value mono">{{ stats.risk_score|default(0) }}</span>
+          <span class="gauge-sub">/100</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-info">
+      <div class="card-eyebrow">COMPOSITE THREAT INDEX</div>
+      <h3 class="hero-headline">
+        {% if stats.risk_score is defined and stats.risk_score >= 60 %}
+          <span class="status-chip danger">ELEVATED RISK</span>
+        {% elif stats.risk_score is defined and stats.risk_score >= 35 %}
+          <span class="status-chip warning">MODERATE RISK</span>
+        {% else %}
+          <span class="status-chip success">NORMAL ACTIVITY</span>
+        {% endif %}
+      </h3>
+      <p class="hero-desc">
+        {% if stats.active_alerts is defined and stats.active_alerts > 0 %}
+          <strong>{{ stats.active_alerts }} active alert{{ 's' if stats.active_alerts != 1 else '' }}</strong> detected from off-hours brute force and Tor relay logins.
+        {% else %}
+          Authentication vectors within expected baseline parameters.
+        {% endif %}
+      </p>
+    </div>
+  </div>
+
+  <!-- Total Logins Card -->
+  <div class="card metric-card">
+    <div class="card-header-clean">
+      <span class="metric-label">TOTAL LOGIN ATTEMPTS</span>
+      <span class="metric-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+          <polyline points="10 17 15 12 10 7"></polyline>
+          <line x1="15" y1="12" x2="3" y2="12"></line>
+        </svg>
+      </span>
+    </div>
+    <div class="metric-val mono">{{ '{:,}'.format(stats.total_logins|default(0)) }}</div>
+    <div class="metric-footer">
+      <span class="metric-subtext">Monitored over {{ window_label }}</span>
+    </div>
+  </div>
+
+  <!-- Failed Attempts Card -->
+  <div class="card metric-card">
+    <div class="card-header-clean">
+      <span class="metric-label">FAILED ATTEMPTS</span>
+      <span class="metric-icon danger-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="10" r="10"></circle>
+          <line x1="15" y1="9" x2="9" y2="15"></line>
+          <line x1="9" y1="9" x2="15" y2="15"></line>
+        </svg>
+      </span>
+    </div>
+    <div class="metric-val mono danger-text">{{ '{:,}'.format(stats.failed_attempts|default(0)) }}</div>
+    <div class="metric-footer">
+      <span class="delta-pill {{ 'delta-up' if stats.failed_delta is defined and stats.failed_delta > 0 else 'delta-down' }}">
+        {{ '+' if stats.failed_delta is defined and stats.failed_delta > 0 else '' }}{{ stats.failed_delta|default(0) }}% vs prior window
+      </span>
+    </div>
+  </div>
+
+  <!-- Blocked IPs Card -->
+  <div class="card metric-card">
+    <div class="card-header-clean">
+      <span class="metric-label">BLOCKED ENTITIES</span>
+      <span class="metric-icon warning-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+        </svg>
+      </span>
+    </div>
+    <div class="metric-val mono warning-text">{{ stats.blocked_ips|default(0) }}</div>
+    <div class="metric-footer">
+      <span class="delta-pill delta-neutral">
+        {{ '+' if stats.blocked_delta is defined and stats.blocked_delta > 0 else '' }}{{ stats.blocked_delta|default(0) }} auto-mitigated
+      </span>
+    </div>
+  </div>
+</section>
+
+<!-- Section 1: Hourly Heatmap & Threat Watchlist -->
+<section class="grid-2-col" id="activity-section">
+  <!-- 24-Hour Velocity Heatmap -->
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <h2 class="panel-title">Login Velocity by Hour</h2>
+        <p class="panel-desc">Visualizes unusual off-hours authentication spikes ("After Dark" activity)</p>
+      </div>
+      <div class="panel-tag mono">WINDOW: 24 HOURS</div>
+    </div>
+
+    <div class="heatmap-container">
+      <div class="heatmap-grid" id="heatmapGrid">
+        {% for ratio in hourly_activity %}
+          {% set idx = loop.index0 %}
+          {% set count = hourly_counts[idx] if idx < (hourly_counts|length) else 0 %}
+          {% set is_spike = idx in [2, 3] or ratio >= 0.7 %}
+          <div class="heatmap-cell {{ 'cell-spike' if is_spike else '' }}"
+               style="--heat-ratio: {{ '%.2f'|format(ratio) }};"
+               data-tip="{{ '%02d:00'|format(idx) }} — {{ count }} logins ({{ (ratio * 100)|round|int }}% failed)"
+               tabindex="0">
+            <span class="cell-label mono">{{ '%02d'|format(idx) }}</span>
+          </div>
+        {% else %}
+          <div class="empty-notice">No hourly activity records present in current telemetry slice.</div>
+        {% endfor %}
+      </div>
+
+      <div class="heatmap-footer">
+        <div class="heatmap-legend">
+          <span class="legend-item"><span class="legend-swatch quiet"></span> Baseline (<25%)</span>
+          <span class="legend-item"><span class="legend-swatch moderate"></span> Moderate (25-60%)</span>
+          <span class="legend-item"><span class="legend-swatch critical"></span> Off-Hours Anomaly (>60%)</span>
+        </div>
+        <div class="heatmap-note">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          Spikes detected at 02:00 and 03:00 UTC correlate with automated credential stuffing.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- IP Threat Watchlist -->
+  <div class="panel" id="watchlist-panel">
+    <div class="panel-header">
+      <div>
+        <h2 class="panel-title">Suspicious IP Watchlist</h2>
+        <p class="panel-desc">Top offender addresses flagged by automated correlation rules</p>
+      </div>
+      <span class="panel-badge warning">{{ suspicious_ips|length }} flagged</span>
+    </div>
+
+    <div class="watchlist-list">
+      {% for item in suspicious_ips %}
+        <div class="watchlist-item">
+          <div class="watchlist-item-left">
+            <div class="watchlist-ip-row">
+              <span class="ip-address mono">{{ item.ip }}</span>
+              <span class="origin-tag">{{ item.country|default('Unknown Origin') }}</span>
+            </div>
+            <div class="watchlist-reason">{{ item.reason|default('Anomalous rate signature') }}</div>
+          </div>
+          <div class="watchlist-item-right">
+            <span class="attempt-counter mono" title="Failed login count">{{ item.attempts }} hits</span>
+            <span class="risk-pill {{ 'risk-high' if item.risk == 'High' else 'risk-med' }}">{{ item.risk|default('High') }}</span>
+          </div>
+        </div>
+      {% else %}
+        <div class="empty-notice">No high-risk IP addresses currently flagged.</div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Section 2: Real-time Alerts Table & Brute Force Tracker -->
+<section class="grid-table-col" id="alerts-section">
+  <!-- Live Alerts Table -->
+  <div class="panel">
+    <div class="panel-header table-panel-header">
+      <div>
+        <h2 class="panel-title">Security Alert Stream</h2>
+        <p class="panel-desc">Audited authentication events requiring SOC analyst review</p>
+      </div>
+
+      <div class="table-tools">
+        <!-- Interactive Alert Filter Search -->
+        <div class="search-box">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="alertSearch" placeholder="Search user or IP..." aria-label="Filter alerts">
+        </div>
+
+        <!-- Severity filter pills -->
+        <div class="filter-pills" id="severityFilter">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="critical">Critical</button>
+          <button class="filter-btn" data-filter="suspicious">Suspicious</button>
+          <button class="filter-btn" data-filter="normal">Normal</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table" id="alertsTable">
+        <thead>
+          <tr>
+            <th scope="col" style="width: 100px;">Timestamp</th>
+            <th scope="col" style="width: 170px;">Target User / Source</th>
+            <th scope="col" style="width: 130px;">Severity</th>
+            <th scope="col">Trigger Reason & Context</th>
+            <th scope="col" style="width: 110px;">Action Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for alert in alerts %}
+            <tr class="alert-row" data-severity="{{ alert.level|lower }}">
+              <td class="mono timestamp-cell">{{ alert.time }}</td>
+              <td>
+                <div class="user-meta-cell">
+                  <span class="user-name">{{ alert.user|default('unknown') }}</span>
+                  <span class="user-ip mono">{{ alert.ip }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="badge {{ alert.level|lower }}">
+                  <span class="badge-dot"></span>
+                  {{ alert.level|capitalize }}
+                </span>
+              </td>
+              <td class="reason-cell">
+                <span class="reason-text">{{ alert.reason }}</span>
+              </td>
+              <td>
+                <span class="status-indicator-tag">{{ alert.status|default('Audited') }}</span>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="5" class="empty-notice">No authentication events found for this query.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Brute Force Lockout Monitor -->
+  <div class="panel" id="lockout-panel">
+    <div class="panel-header">
+      <div>
+        <h2 class="panel-title">Brute-Force Lockout Tracker</h2>
+        <p class="panel-desc">Threshold velocity (10 failed attempts / 15m = Auto-Lockout)</p>
+      </div>
+    </div>
+
+    <div class="lockout-list">
+      {% for target in bruteforce_users %}
+        {% set threshold = target.threshold|default(10) %}
+        {% set pct = ((target.attempts / threshold) * 100)|round|int if threshold else 0 %}
+        {% set is_critical = pct >= 80 %}
+        <div class="lockout-item">
+          <div class="lockout-meta">
+            <div class="user-account">
+              <span class="user-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </span>
+              <span class="account-name mono">{{ target.user }}</span>
+            </div>
+            <span class="lockout-ratio mono {{ 'danger-text' if is_critical else '' }}">
+              {{ target.attempts }}/{{ threshold }} attempts
+            </span>
+          </div>
+
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill {{ 'fill-danger' if is_critical else 'fill-warning' }}"
+                 style="width: {{ pct if pct <= 100 else 100 }}%;"></div>
+          </div>
+
+          <div class="lockout-status-row">
+            <span class="threshold-percent mono">{{ pct }}% toward lockout</span>
+            {% if is_critical %}
+              <span class="lockout-warning-chip">LOCKOUT IMMINENT</span>
+            {% else %}
+              <span class="lockout-safe-chip">MONITORED</span>
+            {% endif %}
+          </div>
+        </div>
+      {% else %}
+        <div class="empty-notice">All user accounts currently within safe attempt thresholds.</div>
+      {% endfor %}
+    </div>
+
+    <div class="panel-callout">
+      <div class="callout-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+      </div>
+      <div class="callout-text">
+        Automated IP jail triggers immediately upon reaching 100% lockout threshold.
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
