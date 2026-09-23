@@ -12,7 +12,10 @@ VALID_USERS = {
     "admin": "Secr3tP@ss!",
     "security_analyst": "Shield#2026",
     "alice": "CyberPass123",
-    "bob": "NightOwl99!"
+    "bob": "NightOwl99!",
+    "hrushikesh":"zerotrace1",
+    "akash":"zerotrace2",
+    "aman":"zerotrace3"
 }
 
 # Detection Configuration

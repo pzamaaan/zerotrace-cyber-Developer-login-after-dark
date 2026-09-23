@@ -1,20 +1,13 @@
-// ====================================================
-// Login After Dark - Client Interaction & SOC Engine
-// ====================================================
-
 document.addEventListener('DOMContentLoaded', () => {
   refreshDashboard();
-  // Poll stats and logs periodically
   setInterval(refreshDashboard, 5000);
 });
 
-// Quick fill credentials helper
 function fillCreds(username, password) {
   document.getElementById('username').value = username;
   document.getElementById('password').value = password;
 }
 
-// Fetch and update dashboard metrics and log stream
 async function refreshDashboard() {
   try {
     const [statsRes, logsRes] = await Promise.all([
@@ -42,7 +35,6 @@ function updateStatsUI(stats) {
   document.getElementById('stat-critical').textContent = stats.critical_count || 0;
   document.getElementById('stat-safe').textContent = stats.safe_count || 0;
 
-  // Update rule hit counter badges
   const rules = stats.rule_counts || {};
   document.getElementById('count-unusual-hours').textContent = rules.UNUSUAL_HOURS || 0;
   document.getElementById('count-brute-force').textContent = (rules.BRUTE_FORCE || 0) + (rules.SUSPICIOUS_RECOVERY || 0);
@@ -92,7 +84,6 @@ function updateLogsUI(logs) {
   }).join('');
 }
 
-// Handle login submission from right panel
 async function handleLogin(e) {
   e.preventDefault();
   const submitBtn = document.getElementById('submit-btn');
@@ -129,7 +120,6 @@ async function handleLogin(e) {
   }
 }
 
-// Render instant risk verdict card on the right
 function renderAssessment(data, httpStatus) {
   const container = document.getElementById('assessment-container');
   const verdictTag = document.getElementById('verdict-tag');
@@ -165,7 +155,6 @@ function renderAssessment(data, httpStatus) {
   container.className = 'assessment-container visible';
 }
 
-// Trigger attack simulation scenarios
 async function simulateScenario(scenario) {
   try {
     const res = await fetch('/api/simulate', {
@@ -194,7 +183,6 @@ async function simulateScenario(scenario) {
   }
 }
 
-// Clear all logs
 async function clearLogs() {
   try {
     await fetch('/api/clear', { method: 'POST' });

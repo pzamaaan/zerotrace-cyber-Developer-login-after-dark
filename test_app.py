@@ -8,7 +8,7 @@ class LoginAfterDarkTestCase(unittest.TestCase):
         logs_store.clear()
 
     def test_feature1_after_dark_anomaly(self):
-        """Feature 1: Off-hours login (e.g. 03:00 AM) should trigger UNUSUAL_HOURS rule."""
+        """Feature 1: Off-hours login (03:00 AM) triggers UNUSUAL_HOURS rule."""
         res = self.client.post("/api/login", json={
             "username": "admin",
             "password": "Secr3tP@ss!",
@@ -23,18 +23,16 @@ class LoginAfterDarkTestCase(unittest.TestCase):
         self.assertEqual(eval_data["classification"], "SUSPICIOUS")
 
     def test_feature2_brute_force_detection(self):
-        """Feature 2: Repeated failed logins (>=3) should trigger BRUTE_FORCE rule."""
+        """Feature 2: >= 3 repeated failures triggers BRUTE_FORCE rule."""
         ip = "192.168.1.99"
-        # First 2 failed attempts
         for _ in range(2):
             self.client.post("/api/login", json={
                 "username": "admin",
                 "password": "WrongPassword!",
                 "ip": ip,
-                "simulated_hour": 14  # daytime
+                "simulated_hour": 14
             })
 
-        # 3rd failed attempt crosses threshold
         res = self.client.post("/api/login", json={
             "username": "admin",
             "password": "WrongPassword!",
@@ -49,7 +47,7 @@ class LoginAfterDarkTestCase(unittest.TestCase):
         self.assertEqual(eval_data["classification"], "CRITICAL")
 
     def test_feature3_burst_velocity_anomaly(self):
-        """Feature 3: Rapid succession of requests (>=3) from same IP triggers BURST_VELOCITY."""
+        """Feature 3: >= 3 rapid requests from single IP triggers BURST_VELOCITY."""
         ip = "172.16.0.4"
         for _ in range(2):
             self.client.post("/api/login", json={
@@ -59,7 +57,6 @@ class LoginAfterDarkTestCase(unittest.TestCase):
                 "simulated_hour": 14
             })
 
-        # 3rd request in same rapid execution window
         res = self.client.post("/api/login", json={
             "username": "alice",
             "password": "CyberPass123",
@@ -72,7 +69,7 @@ class LoginAfterDarkTestCase(unittest.TestCase):
         self.assertIn("BURST_VELOCITY", rule_codes)
 
     def test_normal_daytime_login(self):
-        """Normal daytime login with correct credentials should be SAFE with 0 rules."""
+        """Normal daytime login with correct credentials should be SAFE."""
         res = self.client.post("/api/login", json={
             "username": "alice",
             "password": "CyberPass123",
