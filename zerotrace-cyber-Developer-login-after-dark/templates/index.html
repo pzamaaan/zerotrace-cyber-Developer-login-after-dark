@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login After Dark - SOC Authentication Threat Detector</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+</head>
+
+<body>
+  <!-- Ambient Cybersecurity Cyber Background -->
+  <div class="cyber-bg">
+    <div class="grid-overlay"></div>
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="glow-orb orb-3"></div>
+  </div>
+
+  <div class="app-container">
+    <!-- ============================================== -->
+    <!-- LEFT PANEL: SECURITY MONITORING DASHBOARD     -->
+    <!-- ============================================== -->
+    <section class="panel dashboard-panel">
+      <!-- Header -->
+      <header class="dashboard-header">
+        <div class="brand">
+          <div class="pulse-indicator"></div>
+          <div>
+            <h1 class="brand-title">LOGIN AFTER DARK</h1>
+            <p class="brand-subtitle">Automated Authentication Anomaly & Threat Detection Engine</p>
+          </div>
+        </div>
+        <div class="system-badge">
+          <span class="dot live-dot"></span>
+          <span>MONITORING ACTIVE</span>
+        </div>
+      </header>
+
+      <!-- KPI Metrics Row -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-label">TOTAL LOGINS</span>
+          <span class="stat-value" id="stat-total">0</span>
+          <span class="stat-sub">Analyzed requests</span>
+        </div>
+        <div class="stat-card stat-suspicious">
+          <span class="stat-label">SUSPICIOUS</span>
+          <span class="stat-value" id="stat-suspicious">0</span>
+          <span class="stat-sub">Elevated risk events</span>
+        </div>
+        <div class="stat-card stat-critical">
+          <span class="stat-label">CRITICAL THREATS</span>
+          <span class="stat-value" id="stat-critical">0</span>
+          <span class="stat-sub">Immediate action</span>
+        </div>
+        <div class="stat-card stat-safe">
+          <span class="stat-label">SAFE ACCESS</span>
+          <span class="stat-value" id="stat-safe">0</span>
+          <span class="stat-sub">Normal behavior</span>
+        </div>
+      </div>
+
+      <!-- 3 Core Detection Rules Card -->
+      <div class="rules-container">
+        <div class="section-title">
+          <span>Active Threat Detection Rules (3 Core Features)</span>
+        </div>
+        <div class="rules-grid">
+          <div class="rule-box" id="rule-after-dark">
+            <div class="rule-icon">🌙</div>
+            <div class="rule-info">
+              <h4>1. Unusual Login Hours ("After Dark")</h4>
+              <p>Flags authentication events during off-hours window (<strong>23:00 – 06:00</strong>).</p>
+            </div>
+            <span class="rule-count-badge" id="count-unusual-hours">0</span>
+          </div>
+
+          <div class="rule-box" id="rule-brute-force">
+            <div class="rule-icon">⚔️</div>
+            <div class="rule-info">
+              <h4>2. Brute-Force & Repeated Failures</h4>
+              <p>Detects <strong>&ge; 3 failed attempts</strong> within a 3-minute sliding window.</p>
+            </div>
+            <span class="rule-count-badge" id="count-brute-force">0</span>
+          </div>
+
+          <div class="rule-box" id="rule-burst">
+            <div class="rule-icon">⚡</div>
+            <div class="rule-info">
+              <h4>3. Login Burst / Velocity Anomaly</h4>
+              <p>Detects rapid spikes: <strong>&ge; 3 attempts</strong> in a sub-10 second burst (bots).</p>
+            </div>
+            <span class="rule-count-badge" id="count-burst">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Attack Simulation Bar -->
+      <div class="simulator-toolbar">
+        <span class="toolbar-title">Simulate Attack Scenarios:</span>
+        <div class="btn-group">
+          <button class="sim-btn sim-night" onclick="simulateScenario('after_dark')">
+            🌙 Test "After Dark"
+          </button>
+          <button class="sim-btn sim-brute" onclick="simulateScenario('brute_force')">
+            ⚔️ Test Brute-Force
+          </button>
+          <button class="sim-btn sim-burst" onclick="simulateScenario('burst')">
+            ⚡ Test Rapid Burst
+          </button>
+          <button class="sim-btn sim-normal" onclick="simulateScenario('normal')">
+            ✅ Test Safe Login
+          </button>
+          <button class="sim-btn sim-clear" onclick="clearLogs()">
+            🗑️ Clear Feed
+          </button>
+        </div>
+      </div>
+
+      <!-- Real-Time Activity Log Feed -->
+      <div class="log-section">
+        <div class="section-title">
+          <span>Live Authentication Log Stream</span>
+          <span class="log-counter" id="log-counter-tag">0 events</span>
+        </div>
+        <div class="log-table-wrapper">
+          <table class="log-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>User</th>
+                <th>Client IP</th>
+                <th>Auth Status</th>
+                <th>Threat Level</th>
+                <th>Risk Score</th>
+                <th>Detected Anomalies</th>
+              </tr>
+            </thead>
+            <tbody id="logs-tbody">
+              <tr class="empty-row">
+                <td colspan="7">No authentication events recorded yet. Attempt a login on the right or run a simulation.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- RIGHT PANEL: INTERACTIVE LOGIN INTERFACE      -->
+    <!-- ============================================== -->
+    <section class="panel login-panel">
+      <div class="login-card">
+        <div class="login-header">
+          <div class="shield-badge">🛡️</div>
+          <h2>Authentication Portal</h2>
+          <p>Login to test real-time behavioral security inspection</p>
+        </div>
+
+        <!-- Interactive Form -->
+        <form id="login-form" onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <div class="input-wrapper">
+              <span class="input-icon">👤</span>
+              <input type="text" id="username" placeholder="e.g. admin or alice" value="admin" required
+                autocomplete="off">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <div class="input-wrapper">
+              <span class="input-icon">🔑</span>
+              <input type="password" id="password" placeholder="Enter credentials" value="Secr3tP@ss!" required>
+            </div>
+            <div class="quick-credentials">
+              <span>Quick Fill:</span>
+              <button type="button" class="chip" onclick="fillCreds('admin', 'Secr3tP@ss!')">Valid Pass</button>
+              <button type="button" class="chip chip-fail" onclick="fillCreds('admin', 'WrongPass123')">Wrong
+                Pass</button>
+              <button type="button" class="chip" onclick="fillCreds('alice', 'CyberPass123')">Alice (Valid)</button>
+            </div>
+          </div>
+
+          <!-- Simulation / Anomaly Controls -->
+          <div class="anomaly-controls">
+            <div class="controls-title">⚙️ Anomaly Simulation Toggles:</div>
+
+            <div class="control-row">
+              <label for="sim-time-select">Login Timestamp:</label>
+              <select id="sim-time-select">
+                <option value="real">Real-time (Current Hour)</option>
+                <option value="3" selected>03:18 AM (After Dark Anomaly)</option>
+                <option value="14">02:18 PM (Normal Business Hour)</option>
+                <option value="23">11:30 PM (Late Night Anomaly)</option>
+              </select>
+            </div>
+
+            <div class="control-row">
+              <label for="sim-ip">Source IP Address:</label>
+              <input type="text" id="sim-ip" value="192.168.1.105" placeholder="e.g. 192.168.1.105">
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn" id="submit-btn">
+            <span class="btn-text">SECURE SIGN IN</span>
+            <span class="btn-glow"></span>
+          </button>
+        </form>
+
+        <!-- Threat Assessment Result Box -->
+        <div class="assessment-container" id="assessment-container">
+          <div class="assessment-header">
+            <span class="verdict-tag" id="verdict-tag">SAFE</span>
+            <span class="verdict-score" id="verdict-score">Score: 0/100</span>
+          </div>
+          <div class="assessment-body">
+            <div class="assessment-msg" id="assessment-msg">Authentication verified.</div>
+            <div class="triggered-list" id="triggered-list"></div>
+          </div>
+        </div>
+
+        <div class="valid-users-hint">
+          <strong>Default Valid Users:</strong> <code>admin</code> (Secr3tP@ss!), <code>alice</code> (CyberPass123),
+          <code>bob</code> (NightOwl99!)
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+
+</html>
+{% if false %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login After Dark - SOC Authentication Threat Detector</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+</head>
+
+<body>
+  <!-- Ambient Cybersecurity Cyber Background -->
+  <div class="cyber-bg">
+    <div class="grid-overlay"></div>
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="glow-orb orb-3"></div>
+  </div>
+
+  <div class="app-container">
+    <!-- LEFT PANEL: SECURITY MONITORING DASHBOARD -->
+    <section class="panel dashboard-panel">
+      <!-- Header -->
+      <header class="dashboard-header">
+        <div class="brand">
+          <div class="pulse-indicator"></div>
+          <div>
+            <h1 class="brand-title">LOGIN AFTER DARK</h1>
+            <p class="brand-subtitle">Automated Authentication Anomaly & Threat Detection Engine</p>
+          </div>
+        </div>
+        <div class="system-badge">
+          <span class="dot live-dot"></span>
+          <span>MONITORING ACTIVE</span>
+        </div>
+      </header>
+
+      <!-- KPI Metrics Row -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-label">TOTAL LOGINS</span>
+          <span class="stat-value" id="stat-total">0</span>
+          <span class="stat-sub">Analyzed requests</span>
+        </div>
+        <div class="stat-card stat-suspicious">
+          <span class="stat-label">SUSPICIOUS</span>
+          <span class="stat-value" id="stat-suspicious">0</span>
+          <span class="stat-sub">Elevated risk events</span>
+        </div>
+        <div class="stat-card stat-critical">
+          <span class="stat-label">CRITICAL THREATS</span>
+          <span class="stat-value" id="stat-critical">0</span>
+          <span class="stat-sub">Immediate action</span>
+        </div>
+        <div class="stat-card stat-safe">
+          <span class="stat-label">SAFE ACCESS</span>
+          <span class="stat-value" id="stat-safe">0</span>
+          <span class="stat-sub">Normal behavior</span>
+        </div>
+      </div>
+
+      <!-- 3 Core Detection Rules Card -->
+      <div class="rules-container">
+        <div class="section-title">
+          <span>Active Threat Detection Rules (3 Core Features)</span>
+        </div>
+        <div class="rules-grid">
+          <div class="rule-box" id="rule-after-dark">
+            <div class="rule-icon">🌙</div>
+            <div class="rule-info">
+              <h4>1. Unusual Login Hours ("After Dark")</h4>
+              <p>Flags authentication events during off-hours window (<strong>23:00 – 06:00</strong>).</p>
+            </div>
+            <span class="rule-count-badge" id="count-unusual-hours">0</span>
+          </div>
+
+          <div class="rule-box" id="rule-brute-force">
+            <div class="rule-icon">⚔️</div>
+            <div class="rule-info">
+              <h4>2. Brute-Force & Repeated Failures</h4>
+              <p>Detects <strong>&ge; 3 failed attempts</strong> within a 3-minute sliding window.</p>
+            </div>
+            <span class="rule-count-badge" id="count-brute-force">0</span>
+          </div>
+
+          <div class="rule-box" id="rule-burst">
+            <div class="rule-icon">⚡</div>
+            <div class="rule-info">
+              <h4>3. Login Burst / Velocity Anomaly</h4>
+              <p>Detects rapid spikes: <strong>&ge; 3 attempts</strong> in a sub-10 second burst (bots).</p>
+            </div>
+            <span class="rule-count-badge" id="count-burst">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Attack Simulation Bar -->
+      <div class="simulator-toolbar">
+        <span class="toolbar-title">Simulate Attack Scenarios:</span>
+        <div class="btn-group">
+          <button class="sim-btn sim-night" onclick="simulateScenario('after_dark')">
+            🌙 Test "After Dark"
+          </button>
+          <button class="sim-btn sim-brute" onclick="simulateScenario('brute_force')">
+            ⚔️ Test Brute-Force
+          </button>
+          <button class="sim-btn sim-burst" onclick="simulateScenario('burst')">
+            ⚡ Test Rapid Burst
+          </button>
+          <button class="sim-btn sim-normal" onclick="simulateScenario('normal')">
+            ✅ Test Safe Login
+          </button>
+          <button class="sim-btn sim-clear" onclick="clearLogs()">
+            🗑️ Clear Feed
+          </button>
+        </div>
+      </div>
+
+      <!-- Real-Time Activity Log Feed -->
+      <div class="log-section">
+        <div class="section-title">
+          <span>Live Authentication Log Stream</span>
+          <span class="log-counter" id="log-counter-tag">0 events</span>
+        </div>
+        <div class="log-table-wrapper">
+          <table class="log-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>User</th>
+                <th>Client IP</th>
+                <th>Auth Status</th>
+                <th>Threat Level</th>
+                <th>Risk Score</th>
+                <th>Detected Anomalies</th>
+              </tr>
+            </thead>
+            <tbody id="logs-tbody">
+              <tr class="empty-row">
+                <td colspan="7">No authentication events recorded yet. Attempt a login on the right or run a simulation.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT PANEL: INTERACTIVE LOGIN INTERFACE -->
+    <section class="panel login-panel">
+      <div class="login-card">
+        <div class="login-header">
+          <div class="shield-badge">🛡️</div>
+          <h2>Authentication Portal</h2>
+          <p>Login to test real-time behavioral security inspection</p>
+        </div>
+
+        <!-- Interactive Form -->
+        <form id="login-form" onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <div class="input-wrapper">
+              <span class="input-icon">👤</span>
+              <input type="text" id="username" placeholder="e.g. admin or alice" value="admin" required
+                autocomplete="off">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <div class="input-wrapper">
+              <span class="input-icon">🔑</span>
+              <input type="password" id="password" placeholder="Enter credentials" value="Secr3tP@ss!" required>
+            </div>
+            <div class="quick-credentials">
+              <span>Quick Fill:</span>
+              <button type="button" class="chip" onclick="fillCreds('admin', 'Secr3tP@ss!')">Valid Pass</button>
+              <button type="button" class="chip chip-fail" onclick="fillCreds('admin', 'WrongPass123')">Wrong
+                Pass</button>
+              <button type="button" class="chip" onclick="fillCreds('alice', 'CyberPass123')">Alice (Valid)</button>
+            </div>
+          </div>
+
+          <!-- Simulation / Anomaly Controls -->
+          <div class="anomaly-controls">
+            <div class="controls-title">⚙️ Anomaly Simulation Toggles:</div>
+
+            <div class="control-row">
+              <label for="sim-time-select">Login Timestamp:</label>
+              <select id="sim-time-select">
+                <option value="real">Real-time (Current Hour)</option>
+                <option value="3" selected>03:18 AM (After Dark Anomaly)</option>
+                <option value="14">02:18 PM (Normal Business Hour)</option>
+                <option value="23">11:30 PM (Late Night Anomaly)</option>
+              </select>
+            </div>
+
+            <div class="control-row">
+              <label for="sim-ip">Source IP Address:</label>
+              <input type="text" id="sim-ip" value="192.168.1.105" placeholder="e.g. 192.168.1.105">
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn" id="submit-btn">
+            <span class="btn-text">SECURE SIGN IN</span>
+            <span class="btn-glow"></span>
+          </button>
+        </form>
+
+        <!-- Threat Assessment Result Box -->
+        <div class="assessment-container" id="assessment-container">
+          <div class="assessment-header">
+            <span class="verdict-tag" id="verdict-tag">SAFE</span>
+            <span class="verdict-score" id="verdict-score">Score: 0/100</span>
+          </div>
+          <div class="assessment-body">
+            <div class="assessment-msg" id="assessment-msg">Authentication verified.</div>
+            <div class="triggered-list" id="triggered-list"></div>
+          </div>
+        </div>
+
+        <div class="valid-users-hint">
+          <strong>Default Valid Users:</strong> <code>admin</code> (Secr3tP@ss!), <code>alice</code> (CyberPass123),
+          <code>bob</code> (NightOwl99!)
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+
+</html>
+{% endif %}
