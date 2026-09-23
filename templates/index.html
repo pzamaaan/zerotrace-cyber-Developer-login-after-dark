@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login After Dark — Authentication Monitoring</title>
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='zerotrace-cyber-Developer-login-after-dark/static/css/style.css') }}">
+</head>
+
+<body>
+
+    <header class="site-header">
+        <div class="header-inner">
+            <div class="brand">
+                <span class="brand-mark"></span>
+                <span class="brand-name">Login After Dark</span>
+                <span class="brand-sub">/ auth monitoring</span>
+            </div>
+            <nav class="main-nav">
+                <a href="#" class="active">Dashboard</a>
+                <a href="#">Login Logs</a>
+                <a href="#">Alerts</a>
+                <a href="#">Analysis</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <div class="page-intro">
+            <h1>Login After Dark</h1>
+            <p>Authentication Monitoring &amp; Log Analysis</p>
+        </div>
+
+        <!-- ============ Dashboard Statistics ============ -->
+        <section class="section">
+            <div class="section-head">
+                <h2>Overview</h2>
+            </div>
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="label">Total Login Attempts</div>
+                    <div class="value">{{ total_attempts }}</div>
+                </div>
+                <div class="stat-card accent-amber">
+                    <div class="label">Failed Attempts</div>
+                    <div class="value">{{ failed_attempts }}</div>
+                </div>
+                <div class="stat-card accent-red">
+                    <div class="label">Suspicious Activity</div>
+                    <div class="value">{{ suspicious_activity }}</div>
+                </div>
+                <div class="stat-card accent-cyan">
+                    <div class="label">Blocked IPs</div>
+                    <div class="value">{{ blocked_ips }}</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ Threat Overview ============ -->
+        <section class="section">
+            <div class="section-head">
+                <h2>Threat Overview</h2>
+            </div>
+
+            {% if threat_status == "Critical" %}
+            <div class="threat-banner status-critical">
+                <span class="dot"></span>
+                <div class="body">
+                    <div class="status-label">CRITICAL</div>
+                    <div class="message">{{ threat_message }}</div>
+                </div>
+            </div>
+            {% elif threat_status == "Warning" %}
+            <div class="threat-banner status-warning">
+                <span class="dot"></span>
+                <div class="body">
+                    <div class="status-label">WARNING</div>
+                    <div class="message">{{ threat_message }}</div>
+                </div>
+            </div>
+            {% else %}
+            <div class="threat-banner status-normal">
+                <span class="dot"></span>
+                <div class="body">
+                    <div class="status-label">NORMAL</div>
+                    <div class="message">{{ threat_message }}</div>
+                </div>
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- ============ Recent Authentication Logs ============ -->
+        <section class="section">
+            <div class="section-head">
+                <h2>Recent Authentication Logs</h2>
+                <span class="hint">live feed</span>
+            </div>
+
+            <div class="table-wrap">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Username</th>
+                            <th>IP Address</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                            <th>Risk Level</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in login_logs %}
+                        <tr>
+                            <td class="mono">{{ log.time }}</td>
+                            <td>{{ log.username }}</td>
+                            <td class="mono">{{ log.ip }}</td>
+                            <td>{{ log.location }}</td>
+                            <td>
+                                {% if log.status == "Successful" %}
+                                <span class="badge status-successful">Successful</span>
+                                {% elif log.status == "Failed" %}
+                                <span class="badge status-failed">Failed</span>
+                                {% elif log.status == "Suspicious" %}
+                                <span class="badge status-suspicious">Suspicious</span>
+                                {% else %}
+                                <span class="badge">{{ log.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if log.risk_level == "Low" %}
+                                <span class="badge risk-low">Low</span>
+                                {% elif log.risk_level == "Medium" %}
+                                <span class="badge risk-medium">Medium</span>
+                                {% elif log.risk_level == "High" %}
+                                <span class="badge risk-high">High</span>
+                                {% else %}
+                                <span class="badge">{{ log.risk_level }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr class="empty-row">
+                            <td colspan="6">No authentication logs available.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <div class="two-col">
+            <!-- ============ Suspicious Activity Patterns ============ -->
+            <section class="section">
+                <div class="section-head">
+                    <h2>Suspicious Activity Patterns</h2>
+                </div>
+
+                <div class="pattern-list">
+                    {% for pattern in suspicious_patterns %}
+                    {% if pattern.severity == "High" %}
+                    <div class="pattern-card severity-high">
+                        {% elif pattern.severity == "Medium" %}
+                        <div class="pattern-card severity-medium">
+                            {% else %}
+                            <div class="pattern-card severity-low">
+                                {% endif %}
+                                <div class="info">
+                                    <div class="name">{{ pattern.name }}</div>
+                                    <div class="description">{{ pattern.description }}</div>
+                                </div>
+                                <div class="meta">
+                                    <span class="count">{{ pattern.count }}</span>
+                                    <span class="severity-tag">{{ pattern.severity }}</span>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="pattern-card">
+                                <div class="info">
+                                    <div class="name">No patterns detected</div>
+                                    <div class="description">Nothing supplied by the backend for this period.</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+            </section>
+
+            <!-- ============ Risk Analysis ============ -->
+            <section class="section">
+                <div class="section-head">
+                    <h2>Risk Analysis</h2>
+                </div>
+
+                <div class="risk-panel">
+                    <div class="risk-row">
+                        <div class="risk-top">
+                            <span class="risk-name">Low Risk</span>
+                            <span class="risk-value">{{ risk.low }}%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill low" style="width: {{ risk.low }}%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="risk-row">
+                        <div class="risk-top">
+                            <span class="risk-name">Medium Risk</span>
+                            <span class="risk-value">{{ risk.medium }}%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill medium" style="width: {{ risk.medium }}%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="risk-row">
+                        <div class="risk-top">
+                            <span class="risk-name">High Risk</span>
+                            <span class="risk-value">{{ risk.high }}%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill high" style="width: {{ risk.high }}%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ============ System Status ============ -->
+        <section class="section">
+            <div class="section-head">
+                <h2>System Status</h2>
+            </div>
+
+            <div class="status-grid">
+                <div class="status-card">
+                    <span class="name">Log Collection</span>
+                    {% if system.log_collection == "Active" %}
+                    <span class="status-pill active"><span class="dot"></span>Active</span>
+                    {% elif system.log_collection == "Warning" %}
+                    <span class="status-pill warning"><span class="dot"></span>Warning</span>
+                    {% elif system.log_collection == "Offline" %}
+                    <span class="status-pill offline"><span class="dot"></span>Offline</span>
+                    {% elif system.log_collection == "Ready" %}
+                    <span class="status-pill ready"><span class="dot"></span>Ready</span>
+                    {% else %}
+                    <span class="status-pill">{{ system.log_collection }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="status-card">
+                    <span class="name">Monitoring</span>
+                    {% if system.monitoring == "Active" %}
+                    <span class="status-pill active"><span class="dot"></span>Active</span>
+                    {% elif system.monitoring == "Warning" %}
+                    <span class="status-pill warning"><span class="dot"></span>Warning</span>
+                    {% elif system.monitoring == "Offline" %}
+                    <span class="status-pill offline"><span class="dot"></span>Offline</span>
+                    {% elif system.monitoring == "Ready" %}
+                    <span class="status-pill ready"><span class="dot"></span>Ready</span>
+                    {% else %}
+                    <span class="status-pill">{{ system.monitoring }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="status-card">
+                    <span class="name">Detection Engine</span>
+                    {% if system.detection_engine == "Active" %}
+                    <span class="status-pill active"><span class="dot"></span>Active</span>
+                    {% elif system.detection_engine == "Warning" %}
+                    <span class="status-pill warning"><span class="dot"></span>Warning</span>
+                    {% elif system.detection_engine == "Offline" %}
+                    <span class="status-pill offline"><span class="dot"></span>Offline</span>
+                    {% elif system.detection_engine == "Ready" %}
+                    <span class="status-pill ready"><span class="dot"></span>Ready</span>
+                    {% else %}
+                    <span class="status-pill">{{ system.detection_engine }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+</body>
+
+</html>
