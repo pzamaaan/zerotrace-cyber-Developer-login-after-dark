@@ -1,344 +1,233 @@
-{% extends "base.html" %}
-{% block title %}Authentication Overview — ZeroTrace Login After Dark{% endblock %}
-
-{% block content %}
-{% set stats = stats|default({}) %}
-{% set hourly_activity = hourly_activity|default([]) %}
-{% set hourly_counts = hourly_counts|default([]) %}
-{% set suspicious_ips = suspicious_ips|default([]) %}
-{% set alerts = alerts|default([]) %}
-{% set bruteforce_users = bruteforce_users|default([]) %}
-{% set window_label = window_label|default('last 24h') %}
-
-<!-- Topbar Header -->
-<header class="topbar">
-  <div class="topbar-title-group">
-    <div class="badge-subhead">
-      <span class="pulse-beacon-inline"></span>
-      REAL-TIME AUTH SURVEILLANCE
-    </div>
-    <h1 class="page-title">Authentication Overview</h1>
-    <p class="page-subtitle">Telemetry & off-hours credential stuffing detection across all monitored endpoints</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login After Dark - SOC Authentication Threat Detector</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Ambient Cybersecurity Cyber Background -->
+  <div class="cyber-bg">
+    <div class="grid-overlay"></div>
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="glow-orb orb-3"></div>
   </div>
 
-  <div class="topbar-controls">
-    <div class="time-range-group" role="group" aria-label="Time Window">
-      <button class="pill-btn active" data-range="24h">Last 24h</button>
-      <button class="pill-btn" data-range="7d">Last 7d</button>
-      <button class="pill-btn" data-range="live">Live Stream</button>
-    </div>
-
-    <div class="clock-display">
-      <div class="clock-time mono" id="live-clock">--:--:--</div>
-      <div class="clock-date" id="live-date">Syncing time...</div>
-    </div>
-  </div>
-</header>
-
-<!-- Primary KPI Metric Cards -->
-<section class="stat-row">
-  <!-- Risk Gauge Card -->
-  <div class="card hero-risk-card">
-    <div class="gauge-wrapper">
-      <div class="gauge-ring" style="--risk-score: {{ stats.risk_score|default(0) }};">
-        <div class="gauge-inner">
-          <span class="gauge-value mono">{{ stats.risk_score|default(0) }}</span>
-          <span class="gauge-sub">/100</span>
-        </div>
-      </div>
-    </div>
-    <div class="hero-info">
-      <div class="card-eyebrow">COMPOSITE THREAT INDEX</div>
-      <h3 class="hero-headline">
-        {% if stats.risk_score is defined and stats.risk_score >= 60 %}
-          <span class="status-chip danger">ELEVATED RISK</span>
-        {% elif stats.risk_score is defined and stats.risk_score >= 35 %}
-          <span class="status-chip warning">MODERATE RISK</span>
-        {% else %}
-          <span class="status-chip success">NORMAL ACTIVITY</span>
-        {% endif %}
-      </h3>
-      <p class="hero-desc">
-        {% if stats.active_alerts is defined and stats.active_alerts > 0 %}
-          <strong>{{ stats.active_alerts }} active alert{{ 's' if stats.active_alerts != 1 else '' }}</strong> detected from off-hours brute force and Tor relay logins.
-        {% else %}
-          Authentication vectors within expected baseline parameters.
-        {% endif %}
-      </p>
-    </div>
-  </div>
-
-  <!-- Total Logins Card -->
-  <div class="card metric-card">
-    <div class="card-header-clean">
-      <span class="metric-label">TOTAL LOGIN ATTEMPTS</span>
-      <span class="metric-icon">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-          <polyline points="10 17 15 12 10 7"></polyline>
-          <line x1="15" y1="12" x2="3" y2="12"></line>
-        </svg>
-      </span>
-    </div>
-    <div class="metric-val mono">{{ '{:,}'.format(stats.total_logins|default(0)) }}</div>
-    <div class="metric-footer">
-      <span class="metric-subtext">Monitored over {{ window_label }}</span>
-    </div>
-  </div>
-
-  <!-- Failed Attempts Card -->
-  <div class="card metric-card">
-    <div class="card-header-clean">
-      <span class="metric-label">FAILED ATTEMPTS</span>
-      <span class="metric-icon danger-icon">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="10" r="10"></circle>
-          <line x1="15" y1="9" x2="9" y2="15"></line>
-          <line x1="9" y1="9" x2="15" y2="15"></line>
-        </svg>
-      </span>
-    </div>
-    <div class="metric-val mono danger-text">{{ '{:,}'.format(stats.failed_attempts|default(0)) }}</div>
-    <div class="metric-footer">
-      <span class="delta-pill {{ 'delta-up' if stats.failed_delta is defined and stats.failed_delta > 0 else 'delta-down' }}">
-        {{ '+' if stats.failed_delta is defined and stats.failed_delta > 0 else '' }}{{ stats.failed_delta|default(0) }}% vs prior window
-      </span>
-    </div>
-  </div>
-
-  <!-- Blocked IPs Card -->
-  <div class="card metric-card">
-    <div class="card-header-clean">
-      <span class="metric-label">BLOCKED ENTITIES</span>
-      <span class="metric-icon warning-icon">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
-        </svg>
-      </span>
-    </div>
-    <div class="metric-val mono warning-text">{{ stats.blocked_ips|default(0) }}</div>
-    <div class="metric-footer">
-      <span class="delta-pill delta-neutral">
-        {{ '+' if stats.blocked_delta is defined and stats.blocked_delta > 0 else '' }}{{ stats.blocked_delta|default(0) }} auto-mitigated
-      </span>
-    </div>
-  </div>
-</section>
-
-<!-- Section 1: Hourly Heatmap & Threat Watchlist -->
-<section class="grid-2-col" id="activity-section">
-  <!-- 24-Hour Velocity Heatmap -->
-  <div class="panel">
-    <div class="panel-header">
-      <div>
-        <h2 class="panel-title">Login Velocity by Hour</h2>
-        <p class="panel-desc">Visualizes unusual off-hours authentication spikes ("After Dark" activity)</p>
-      </div>
-      <div class="panel-tag mono">WINDOW: 24 HOURS</div>
-    </div>
-
-    <div class="heatmap-container">
-      <div class="heatmap-grid" id="heatmapGrid">
-        {% for ratio in hourly_activity %}
-          {% set idx = loop.index0 %}
-          {% set count = hourly_counts[idx] if idx < (hourly_counts|length) else 0 %}
-          {% set is_spike = idx in [2, 3] or ratio >= 0.7 %}
-          <div class="heatmap-cell {{ 'cell-spike' if is_spike else '' }}"
-               style="--heat-ratio: {{ '%.2f'|format(ratio) }};"
-               data-tip="{{ '%02d:00'|format(idx) }} — {{ count }} logins ({{ (ratio * 100)|round|int }}% failed)"
-               tabindex="0">
-            <span class="cell-label mono">{{ '%02d'|format(idx) }}</span>
+  <div class="app-container">
+    <!-- ============================================== -->
+    <!-- LEFT PANEL: SECURITY MONITORING DASHBOARD     -->
+    <!-- ============================================== -->
+    <section class="panel dashboard-panel">
+      <!-- Header -->
+      <header class="dashboard-header">
+        <div class="brand">
+          <div class="pulse-indicator"></div>
+          <div>
+            <h1 class="brand-title">LOGIN AFTER DARK</h1>
+            <p class="brand-subtitle">Automated Authentication Anomaly & Threat Detection Engine</p>
           </div>
-        {% else %}
-          <div class="empty-notice">No hourly activity records present in current telemetry slice.</div>
-        {% endfor %}
-      </div>
-
-      <div class="heatmap-footer">
-        <div class="heatmap-legend">
-          <span class="legend-item"><span class="legend-swatch quiet"></span> Baseline (<25%)</span>
-          <span class="legend-item"><span class="legend-swatch moderate"></span> Moderate (25-60%)</span>
-          <span class="legend-item"><span class="legend-swatch critical"></span> Off-Hours Anomaly (>60%)</span>
         </div>
-        <div class="heatmap-note">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="16" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-          </svg>
-          Spikes detected at 02:00 and 03:00 UTC correlate with automated credential stuffing.
+        <div class="system-badge">
+          <span class="dot live-dot"></span>
+          <span>MONITORING ACTIVE</span>
+        </div>
+      </header>
+
+      <!-- KPI Metrics Row -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-label">TOTAL LOGINS</span>
+          <span class="stat-value" id="stat-total">0</span>
+          <span class="stat-sub">Analyzed requests</span>
+        </div>
+        <div class="stat-card stat-suspicious">
+          <span class="stat-label">SUSPICIOUS</span>
+          <span class="stat-value" id="stat-suspicious">0</span>
+          <span class="stat-sub">Elevated risk events</span>
+        </div>
+        <div class="stat-card stat-critical">
+          <span class="stat-label">CRITICAL THREATS</span>
+          <span class="stat-value" id="stat-critical">0</span>
+          <span class="stat-sub">Immediate action</span>
+        </div>
+        <div class="stat-card stat-safe">
+          <span class="stat-label">SAFE ACCESS</span>
+          <span class="stat-value" id="stat-safe">0</span>
+          <span class="stat-sub">Normal behavior</span>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- IP Threat Watchlist -->
-  <div class="panel" id="watchlist-panel">
-    <div class="panel-header">
-      <div>
-        <h2 class="panel-title">Suspicious IP Watchlist</h2>
-        <p class="panel-desc">Top offender addresses flagged by automated correlation rules</p>
-      </div>
-      <span class="panel-badge warning">{{ suspicious_ips|length }} flagged</span>
-    </div>
-
-    <div class="watchlist-list">
-      {% for item in suspicious_ips %}
-        <div class="watchlist-item">
-          <div class="watchlist-item-left">
-            <div class="watchlist-ip-row">
-              <span class="ip-address mono">{{ item.ip }}</span>
-              <span class="origin-tag">{{ item.country|default('Unknown Origin') }}</span>
+      <!-- 3 Core Detection Rules Card -->
+      <div class="rules-container">
+        <div class="section-title">
+          <span>Active Threat Detection Rules (3 Core Features)</span>
+        </div>
+        <div class="rules-grid">
+          <div class="rule-box" id="rule-after-dark">
+            <div class="rule-icon">🌙</div>
+            <div class="rule-info">
+              <h4>1. Unusual Login Hours ("After Dark")</h4>
+              <p>Flags authentication events during off-hours window (<strong>23:00 – 06:00</strong>).</p>
             </div>
-            <div class="watchlist-reason">{{ item.reason|default('Anomalous rate signature') }}</div>
+            <span class="rule-count-badge" id="count-unusual-hours">0</span>
           </div>
-          <div class="watchlist-item-right">
-            <span class="attempt-counter mono" title="Failed login count">{{ item.attempts }} hits</span>
-            <span class="risk-pill {{ 'risk-high' if item.risk == 'High' else 'risk-med' }}">{{ item.risk|default('High') }}</span>
-          </div>
-        </div>
-      {% else %}
-        <div class="empty-notice">No high-risk IP addresses currently flagged.</div>
-      {% endfor %}
-    </div>
-  </div>
-</section>
 
-<!-- Section 2: Real-time Alerts Table & Brute Force Tracker -->
-<section class="grid-table-col" id="alerts-section">
-  <!-- Live Alerts Table -->
-  <div class="panel">
-    <div class="panel-header table-panel-header">
-      <div>
-        <h2 class="panel-title">Security Alert Stream</h2>
-        <p class="panel-desc">Audited authentication events requiring SOC analyst review</p>
-      </div>
-
-      <div class="table-tools">
-        <!-- Interactive Alert Filter Search -->
-        <div class="search-box">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-          <input type="text" id="alertSearch" placeholder="Search user or IP..." aria-label="Filter alerts">
-        </div>
-
-        <!-- Severity filter pills -->
-        <div class="filter-pills" id="severityFilter">
-          <button class="filter-btn active" data-filter="all">All</button>
-          <button class="filter-btn" data-filter="critical">Critical</button>
-          <button class="filter-btn" data-filter="suspicious">Suspicious</button>
-          <button class="filter-btn" data-filter="normal">Normal</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="table-container">
-      <table class="data-table" id="alertsTable">
-        <thead>
-          <tr>
-            <th scope="col" style="width: 100px;">Timestamp</th>
-            <th scope="col" style="width: 170px;">Target User / Source</th>
-            <th scope="col" style="width: 130px;">Severity</th>
-            <th scope="col">Trigger Reason & Context</th>
-            <th scope="col" style="width: 110px;">Action Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for alert in alerts %}
-            <tr class="alert-row" data-severity="{{ alert.level|lower }}">
-              <td class="mono timestamp-cell">{{ alert.time }}</td>
-              <td>
-                <div class="user-meta-cell">
-                  <span class="user-name">{{ alert.user|default('unknown') }}</span>
-                  <span class="user-ip mono">{{ alert.ip }}</span>
-                </div>
-              </td>
-              <td>
-                <span class="badge {{ alert.level|lower }}">
-                  <span class="badge-dot"></span>
-                  {{ alert.level|capitalize }}
-                </span>
-              </td>
-              <td class="reason-cell">
-                <span class="reason-text">{{ alert.reason }}</span>
-              </td>
-              <td>
-                <span class="status-indicator-tag">{{ alert.status|default('Audited') }}</span>
-              </td>
-            </tr>
-          {% else %}
-            <tr>
-              <td colspan="5" class="empty-notice">No authentication events found for this query.</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Brute Force Lockout Monitor -->
-  <div class="panel" id="lockout-panel">
-    <div class="panel-header">
-      <div>
-        <h2 class="panel-title">Brute-Force Lockout Tracker</h2>
-        <p class="panel-desc">Threshold velocity (10 failed attempts / 15m = Auto-Lockout)</p>
-      </div>
-    </div>
-
-    <div class="lockout-list">
-      {% for target in bruteforce_users %}
-        {% set threshold = target.threshold|default(10) %}
-        {% set pct = ((target.attempts / threshold) * 100)|round|int if threshold else 0 %}
-        {% set is_critical = pct >= 80 %}
-        <div class="lockout-item">
-          <div class="lockout-meta">
-            <div class="user-account">
-              <span class="user-icon">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-              </span>
-              <span class="account-name mono">{{ target.user }}</span>
+          <div class="rule-box" id="rule-brute-force">
+            <div class="rule-icon">⚔️</div>
+            <div class="rule-info">
+              <h4>2. Brute-Force & Repeated Failures</h4>
+              <p>Detects <strong>&ge; 3 failed attempts</strong> within a 3-minute sliding window.</p>
             </div>
-            <span class="lockout-ratio mono {{ 'danger-text' if is_critical else '' }}">
-              {{ target.attempts }}/{{ threshold }} attempts
-            </span>
+            <span class="rule-count-badge" id="count-brute-force">0</span>
           </div>
 
-          <div class="progress-bar-wrap">
-            <div class="progress-bar-fill {{ 'fill-danger' if is_critical else 'fill-warning' }}"
-                 style="width: {{ pct if pct <= 100 else 100 }}%;"></div>
-          </div>
-
-          <div class="lockout-status-row">
-            <span class="threshold-percent mono">{{ pct }}% toward lockout</span>
-            {% if is_critical %}
-              <span class="lockout-warning-chip">LOCKOUT IMMINENT</span>
-            {% else %}
-              <span class="lockout-safe-chip">MONITORED</span>
-            {% endif %}
+          <div class="rule-box" id="rule-burst">
+            <div class="rule-icon">⚡</div>
+            <div class="rule-info">
+              <h4>3. Login Burst / Velocity Anomaly</h4>
+              <p>Detects rapid spikes: <strong>&ge; 3 attempts</strong> in a sub-10 second burst (bots).</p>
+            </div>
+            <span class="rule-count-badge" id="count-burst">0</span>
           </div>
         </div>
-      {% else %}
-        <div class="empty-notice">All user accounts currently within safe attempt thresholds.</div>
-      {% endfor %}
-    </div>
+      </div>
 
-    <div class="panel-callout">
-      <div class="callout-icon">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-        </svg>
+      <!-- Quick Attack Simulation Bar -->
+      <div class="simulator-toolbar">
+        <span class="toolbar-title">Simulate Attack Scenarios:</span>
+        <div class="btn-group">
+          <button class="sim-btn sim-night" onclick="simulateScenario('after_dark')">
+            🌙 Test "After Dark"
+          </button>
+          <button class="sim-btn sim-brute" onclick="simulateScenario('brute_force')">
+            ⚔️ Test Brute-Force
+          </button>
+          <button class="sim-btn sim-burst" onclick="simulateScenario('burst')">
+            ⚡ Test Rapid Burst
+          </button>
+          <button class="sim-btn sim-normal" onclick="simulateScenario('normal')">
+            ✅ Test Safe Login
+          </button>
+          <button class="sim-btn sim-clear" onclick="clearLogs()">
+            🗑️ Clear Feed
+          </button>
+        </div>
       </div>
-      <div class="callout-text">
-        Automated IP jail triggers immediately upon reaching 100% lockout threshold.
+
+      <!-- Real-Time Activity Log Feed -->
+      <div class="log-section">
+        <div class="section-title">
+          <span>Live Authentication Log Stream</span>
+          <span class="log-counter" id="log-counter-tag">0 events</span>
+        </div>
+        <div class="log-table-wrapper">
+          <table class="log-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>User</th>
+                <th>Client IP</th>
+                <th>Auth Status</th>
+                <th>Threat Level</th>
+                <th>Risk Score</th>
+                <th>Detected Anomalies</th>
+              </tr>
+            </thead>
+            <tbody id="logs-tbody">
+              <tr class="empty-row">
+                <td colspan="7">No authentication events recorded yet. Attempt a login on the right or run a simulation.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- RIGHT PANEL: INTERACTIVE LOGIN INTERFACE      -->
+    <!-- ============================================== -->
+    <section class="panel login-panel">
+      <div class="login-card">
+        <div class="login-header">
+          <div class="shield-badge">🛡️</div>
+          <h2>Authentication Portal</h2>
+          <p>Login to test real-time behavioral security inspection</p>
+        </div>
+
+        <!-- Interactive Form -->
+        <form id="login-form" onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <div class="input-wrapper">
+              <span class="input-icon">👤</span>
+              <input type="text" id="username" placeholder="e.g. admin or alice" value="admin" required autocomplete="off">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <div class="input-wrapper">
+              <span class="input-icon">🔑</span>
+              <input type="password" id="password" placeholder="Enter credentials" value="Secr3tP@ss!" required>
+            </div>
+            <div class="quick-credentials">
+              <span>Quick Fill:</span>
+              <button type="button" class="chip" onclick="fillCreds('admin', 'Secr3tP@ss!')">Valid Pass</button>
+              <button type="button" class="chip chip-fail" onclick="fillCreds('admin', 'WrongPass123')">Wrong Pass</button>
+              <button type="button" class="chip" onclick="fillCreds('alice', 'CyberPass123')">Alice (Valid)</button>
+            </div>
+          </div>
+
+          <!-- Simulation / Anomaly Controls -->
+          <div class="anomaly-controls">
+            <div class="controls-title">⚙️ Anomaly Simulation Toggles:</div>
+
+            <div class="control-row">
+              <label for="sim-time-select">Login Timestamp:</label>
+              <select id="sim-time-select">
+                <option value="real">Real-time (Current Hour)</option>
+                <option value="3" selected>03:18 AM (After Dark Anomaly)</option>
+                <option value="14">02:18 PM (Normal Business Hour)</option>
+                <option value="23">11:30 PM (Late Night Anomaly)</option>
+              </select>
+            </div>
+
+            <div class="control-row">
+              <label for="sim-ip">Source IP Address:</label>
+              <input type="text" id="sim-ip" value="192.168.1.105" placeholder="e.g. 192.168.1.105">
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn" id="submit-btn">
+            <span class="btn-text">SECURE SIGN IN</span>
+            <span class="btn-glow"></span>
+          </button>
+        </form>
+
+        <!-- Threat Assessment Result Box -->
+        <div class="assessment-container" id="assessment-container">
+          <div class="assessment-header">
+            <span class="verdict-tag" id="verdict-tag">SAFE</span>
+            <span class="verdict-score" id="verdict-score">Score: 0/100</span>
+          </div>
+          <div class="assessment-body">
+            <div class="assessment-msg" id="assessment-msg">Authentication verified.</div>
+            <div class="triggered-list" id="triggered-list"></div>
+          </div>
+        </div>
+
+        <div class="valid-users-hint">
+          <strong>Default Valid Users:</strong> <code>admin</code> (Secr3tP@ss!), <code>alice</code> (CyberPass123), <code>bob</code> (NightOwl99!)
+        </div>
+      </div>
+    </section>
   </div>
-</section>
-{% endblock %}
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
